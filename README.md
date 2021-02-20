@@ -4,6 +4,7 @@
 # nu
 
 <!-- badges: start -->
+
 <!-- badges: end -->
 
 ## Installation
@@ -11,7 +12,6 @@
 ``` r
 # install.packages("remotes")
 remotes::install_github("choisy/nu")
-remotes::install_github("RBigData/remoter")
 ```
 
 ## Packages
@@ -19,108 +19,59 @@ remotes::install_github("RBigData/remoter")
 Everything below relies on the use of the `remoter` package. Load it:
 
 ``` r
-library(remoter)
+library(nu)
 ```
 
-## Running commands interactively on a remote server
-
-The way things are set up now is that each of the NUC\* servers has an R
-session that is running in server mode and that is you can access
-seamlessly from your local R session thanks to this `remoter` package.
-For example, interactively accessing the R session that is running on
-NUC1:
+## Looking at the list of files in a directory on the remote server
 
 ``` r
-client(nu::c1)
+nu::ddir(dir = "Marc", ip = nu::c1, user = "ubuntu", key = "~/.ssh/GROUP-Modelling.pem")
 ```
 
-From here (as indicated by the prompt `>remoter`), whatever R command
-you type will be run on the distant R session on the NUC1 server. The
-result of these commands are sent to your local screen. To exit the
-remote R session and come back to your local R session, type:
+where `dir` is the name of the directory on the remote server we want to
+look at, `ip` is the IP address of the remote server, `user` is the user
+name for the SSH connectionn, and `key` is the path on your local
+computer to the key for the SSH connection.
+
+## Looking at the list of running processes on the remote server
 
 ``` r
-exit()
+nu::dps(ip = nu::c1, user = "ubuntu", key = "~/.ssh/GROUP-Modelling.pem")
 ```
 
-## Running an R script
+with the same definitions of the arguments as for `nu::ddir()`
 
-Convert your Rmardown into a R script:
+## Sending a file to the remote server
 
 ``` r
-knitr::purl("my_analysis.Rmd")
+send_file(file = "my_script.R", ip = nu::c1, dir = "Marc", user = "ubuntu", key = "~/.ssh/GROUP-Modelling.pem")
 ```
 
-It could be a good idea to edit this R script to (1) remove any data
-visualization that you’re not interested here (your script will run
-faster) and (2) add commands to save calculation outputs to disk (just
-for safety, otherwise your calculation results will be in the remote
-working space anyway). Ex:
+where `file` is the name of the file you want to send. This file has to
+be in your working directory. `dir` is the name of the directory on the
+remote server where you want to send this file. Note that this directory
+needs to exist. The definition of the other arguments are the same as
+for `nu::ddir()``nu::ddir()`.
+
+## Running a script on the remote server
+
+The function you should use for that is `run_script_bg()`:
 
 ``` r
-saveRDS(output1, "output1.rds")
-saveRDS(output2, "output2.rds")
+run_script_bg(file = "my_script.R", ip = nu::c1, dir = "Marc", user = "ubuntu", key = "~/.ssh/GROUP-Modelling.pem")
 ```
 
-Or, alternatively, in one command:
+`dir` indicates where you want to run your R session on the remote
+server. This is important as it determines where your files
+(e.g. calculations results) will be saved. The definition of the other
+arguments are the same as for `nu::ddir()``nu::ddir()`.
+
+## Bringing a file from the remote server to your local computer
 
 ``` r
-save(output1, output2, file = "outputs.rda")
+fetch_file(file = "sim1.rds", ip = nu::c1, dir = "Marc", user = "ubuntu", key = "~/.ssh/GROUP-Modelling.pem")
 ```
 
-Or this if you want to save all the workspace:
-
-``` r
-save.image("workspace.rda")
-```
-
-Then to run the script on the NUC1 remote server:
-
-``` r
-batch(nu::c1, file = "my_analysis.R")
-```
-
-From here you can kill your local R session and your script keeps
-running on the remote R session. Once the calculations are done, you can
-fetch the results back to your local computer with the `s2c()` function.
-First you need to reconnect with the server in interactive mode:
-
-``` r
-client(nu::c1)
-```
-
-And then you can seamlessly bring R objects from the remote R session to
-your local one:
-
-``` r
-s2c(output1)
-s2c(output2)
-```
-
-You can use the function `c2s()` if you want to do the opposite. Once
-you are interactively logged to the remote server you can use `lsc()`
-and `rmc()` to list and delete files from your local working space. As
-simple as that. And to access NUC1, NUC2, NUC3, NUC4 and NUC5, simply
-use the shortcuts `nu::c1`, `nu::c2`, `nu::c3`, `nu::c4` and `nu::c5`
-respectively.
-
-Finally, remember that each of these 5 NUC computers has 8 cores. Use
-the `mclapply()` function (a multi-core version of the `lapply()` base
-function that basically replaces loops) from the `parallel` package to
-parallelize your calculation across these 8 cores. And if you want to
-spread your calculation to the 5 x 8 = 40 CPUs that are available in
-total, then you have to make 5 scripts that split the calculation in
-five and run these 5 batches:
-
-``` r
-batch(nu::c1, file = "my_analysis1.R")
-batch(nu::c2, file = "my_analysis2.R")
-batch(nu::c3, file = "my_analysis3.R")
-batch(nu::c4, file = "my_analysis4.R")
-batch(nu::c5, file = "my_analysis5.R")
-```
-
-You want to think of an R function that could seamlessly (1) generate
-the `my_analysis1.R`, `my_analysis2.R`, `my_analysis3.R`,
-`my_analysis4.R` and `my_analysis5.R` files from `my_analysis.R` and (2)
-call the 5 `batch()` commands.
+where `file` is the name of the file of the `dir` directory that you
+want to bring to your local computer. The definition of the other
+arguments are the same as for `nu::ddir()``nu::ddir()`.
