@@ -1,3 +1,6 @@
+#' Send a file to a server
+#'
+#' @export
 send_file <- function(file, ip, dir, user, key) {
   system(paste0("sftp -i ", key, " ", user, "@", ip, ":", dir, " <<< $'put ", file, "'"))
 }

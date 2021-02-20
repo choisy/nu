@@ -1,3 +1,6 @@
+#' Fetch a file from a server
+#'
+#' @export
 fetch_file <- function(file, ip, dir, user, key) {
   system(paste0("sftp -i ", key, " ", user, "@", ip, ":", dir, " <<< $'get ", file, "'"))
 }

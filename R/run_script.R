@@ -1,3 +1,6 @@
+#' Run a script on a server
+#'
+#' @export
 run_script <- function(file, ip, dir, user, key) {
   system(paste0("ssh -i ", key, " ", user, "@", ip, " ", "'cd ", dir, "; ", "Rscript ", file, "'"))
 }
